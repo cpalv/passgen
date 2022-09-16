@@ -1,5 +1,7 @@
 # Password Generator in Python and Rust
 
+Generate a complex password with python or rust!
+
 ## Installation
 
 `git clone https://github.com/cpalv/passgen.git`
