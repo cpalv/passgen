@@ -1,10 +1,14 @@
 use clap::Parser;
-use rand::prelude::SliceRandom;
-use rand::thread_rng;
+use rand::prelude::{SliceRandom, thread_rng};
+
+#[derive(Debug)]
+enum PassErr {
+    MinLen,
+}
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
-struct Args{
+struct Cli {
     /// Use special characters [default: false]
     #[clap(short, long, action)]
     special: bool,
@@ -19,23 +23,39 @@ fn has<T: std::cmp::PartialEq>(s1: &Vec<T> , s2: &Vec<T>) -> bool {
     return s1.iter().any(|e| s2.contains(e))
 }
 
-fn main() {
+fn main() -> Result<(), PassErr> {
     let mut rng = thread_rng();
-    let lower: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
-    let upper: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().collect();
-    let digits: Vec<char> = "0123456789".chars().collect();
-    let special_chars: Vec<char> = "!@#$%^&*()_-+=".chars().collect();
+    let lower: Vec<char> = vec!['a', 'b', 'c', 'd', 'e', 'f', 'g',
+                                'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                                'o', 'p', 'q', 'r', 's', 't', 'u',
+                                'v', 'w', 'x', 'y', 'z'];
+
+    let upper: Vec<char> = vec!['A', 'B', 'C', 'D', 'E', 'F', 'G',
+                                'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                                'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+                                'V', 'W', 'X', 'Y', 'Z'];
+
+    let digits: Vec<char> = vec!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+    let special_chars: Vec<char> = vec!['!', '@', '#', '$', '%', '^', '&', '*', '(',
+                                        ')', '_', '-', '+', '='];
 
     const MAGIC_NUM: i32 = 7;
+    const MIN_LENGTH: usize = 5;
 
     let mut charset = Vec::new();
-    let args = Args::parse();
+    let cli = Cli::parse();
+
+    if cli.length < MIN_LENGTH {
+        eprintln!("cannot generate password below minimum length: {}", MIN_LENGTH);
+        return Err(PassErr::MinLen);
+    }
 
     charset.extend(&lower);
     charset.extend(&upper);
     charset.extend(&digits);
 
-    if args.special {
+    if cli.special {
         charset.extend(&special_chars);
     }
 
@@ -45,14 +65,15 @@ fn main() {
 
     let mut password: Vec<char>;
     loop {
-        password = charset.choose_multiple(&mut rng, args.length).
+        password = charset.choose_multiple(&mut rng, cli.length).
         cloned().collect();
 
-        if !has(&password, &lower) && !has(&password, &upper) && !has(&password, &digits) {
+        if !(has(&password, &lower) && has(&password, &upper) && has(&password, 
+                                                                     &digits)) {
             continue
         }
 
-        if args.special && !has(&password, &special_chars) {
+        if cli.special && !has(&password, &special_chars) {
             continue
         }
 
@@ -60,4 +81,5 @@ fn main() {
     }
 
     println!("Generated: {}", String::from_iter(password.iter()));
+    Ok(())
 }
