@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, CommandFactory};
 use rand::prelude::{SliceRandom, thread_rng};
 
 #[derive(Debug)]
@@ -48,6 +48,7 @@ fn main() -> Result<(), PassErr> {
 
     if cli.length < MIN_LENGTH {
         eprintln!("cannot generate password below minimum length: {}", MIN_LENGTH);
+        Cli::command().print_help();
         return Err(PassErr::MinLen);
     }
 
@@ -65,8 +66,7 @@ fn main() -> Result<(), PassErr> {
 
     let mut password: Vec<char>;
     loop {
-        password = charset.choose_multiple(&mut rng, cli.length).
-        cloned().collect();
+        password = charset.choose_multiple(&mut rng, cli.length).cloned().collect();
 
         if !(has(&password, &lower) && has(&password, &upper) && has(&password, 
                                                                      &digits)) {
